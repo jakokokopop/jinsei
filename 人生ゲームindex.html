@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ほじゃこ人生ゲーム200（4人対戦版）</title>
+  <style>
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+    }
+    .players-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 8px;
+    }
+    .player-card {
+      background: #fff;
+      border: 2px solid #cfd8dc;
+      border-radius: 10px;
+      padding: 7px 9px;
+      font-size: 11px;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+    .player-card.active {
+      border-color: #ff6f00;
+      background: #fff8e1;
+      box-shadow: 0 0 8px rgba(255, 111, 0, 0.45);
+      transform: scale(1.02);
+    }
+    .player-card.finished {
+      background: #f3e5f5;
+      border-color: #8e24aa;
+    }
+    .p-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .p-money {
+      color: #c62828;
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      max-width: 440px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+      border: 1px solid #cfd8dc;
+      font-size: 11px;
+    }
+    .track {
+      position: relative;
+      height: 18px;
+      background: #e0e0e0;
+      border-radius: 9px;
+      margin-top: 4px;
+    }
+    .track-pin {
+      position: absolute;
+      top: -2px;
+      font-size: 15px;
+      transform: translateX(-50%);
+      transition: left 0.3s;
+    }
+    .board-header {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #546e7a;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 8px;
+    }
+    .cell {
+      background: #fff;
+      border: 2px solid #b0bec5;
+      border-radius: 7px;
+      height: 54px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9.5px;
+      line-height: 1.15;
+      text-align: center;
+      padding: 3px 2px;
+      box-sizing: border-box;
+    }
+    .cell.current-pos { border-color: #ff6f00; border-width: 2.5px; }
+    .cell.payday { background: #fff9c4; border-color: #fbc02d; font-weight: bold; }
+    .cell.job { background: #e1f5fe; border-color: #29b6f6; }
+    .cell.good { background: #e8f5e9; border-color: #66bb6a; }
+    .cell.bad { background: #ffebee; border-color: #ef5350; }
+    .cell.special { background: #fff3e0; border-color: #ffa726; font-weight: bold; }
+    .cell.goal { background: #f3e5f5; border-color: #ab47bc; font-weight: bold; }
+    .pins-area {
+      font-size: 13px;
+      line-height: 1;
+      min-height: 15px;
+      letter-spacing: -2px;
+    }
+    .event-box {
+      background: #fff;
+      border: 2px solid #37474f;
+      border-radius: 10px;
+      padding: 10px;
+      width: 100%;
+      max-width: 440px;
+      min-height: 76px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+      font-size: 13.5px;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: bold;
+      color: #263238;
+    }
+    .control-area {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      flex: 1;
+      background: linear-gradient(135deg, #ff8f00, #ef6c00);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px #bf360c;
+    }
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px #bf360c;
+    }
+    button:disabled {
+      background: #b0bec5;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="players-grid" id="players-grid"></div>
+
+  <div class="progress-bar-wrap">
+    <div style="display:flex; justify-content:space-between;">
+      <span>START (0)</span>
+      <span>全200マス 進行マップ</span>
+      <span>GOAL (200)</span>
+    </div>
+    <div class="track" id="track"></div>
+  </div>
+
+  <div class="board-header">
+    <span id="view-range">表示エリア: 0 〜 24マス</span>
+    <span>※ルーレットは 1〜10 がでます</span>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="event-box" id="event-box">
+    全200マス！4人対戦人生ゲームスタート！<br>まずは 🐶 ポチ のターンです！
+  </div>
+
+  <div class="control-area">
+    <button id="spin-btn" onclick="spinRoulette()">🎲 🐶 ポチ ルーレットを回す！</button>
+  </div>
+
+  <script>
+    const TOTAL_CELLS = 200; // 0(START)〜200(GOAL)
+
+    const jobs = [
+      { name: "アルバイト", salary: 200000 },
+      { name: "会社員", salary: 450000 },
+      { name: "一流エンジニア", salary: 900000 },
+      { name: "人気配信者", salary: 1800000 },
+      { name: "大企業CEO", salary: 5000000 }
+    ];
+
+    const goodEvents = [
+      { label: "宝くじ当選", money: 1000000, text: "スクラッチ宝くじで1等当選！＋100万円" },
+      { label: "副業大成功", money: 800000, text: "作ったゲームがバズって大ヒット！＋80万円" },
+      { label: "株で利益", money: 1500000, text: "持っていた株が急上昇した！＋150万円" },
+      { label: "臨時ボーナス", money: 500000, text: "仕事が評価されて臨時ボーナス！＋50万円" },
+      { label: "お宝発見", money: 1200000, text: "散歩中に埋蔵金を発見した！＋120万円" },
+      { label: "懸賞当選", money: 300000, text: "テレビの懸賞に応募したら当たった！＋30万円" },
+      { label: "不動産売却", money: 3000000, text: "買った土地が値上がりして売却！＋300万円" },
+      { label: "遺産相続", money: 5000000, text: "遠い親戚の富豪から遺産が転がり込んだ！＋500万円" }
+    ];
+
+    const badEvents = [
+      { label: "スマホ修理", money: -150000, text: "最新スマホを落として画面がバキバキに… －15万円" },
+      { label: "高級焼肉おごり", money: -300000, text: "全員に高級焼肉をおごってあげた！ －30万円" },
+      { label: "車の修理代", money: -600000, text: "愛車をこすってしまい修理代がかかった… －60万円" },
+      { label: "投資失敗", money: -1500000, text: "怪しい投資話に乗って大損した… －150万円" },
+      { label: "海外豪遊", money: -1000000, text: "気分が良くなって海外で豪遊しすぎた！ －100万円" },
+      { label: "税金支払い", money: -800000, text: "予定外の税金通知が届いた… －80万円" },
+      { label: "詐欺被害", money: -2000000, text: "フィッシング詐欺に引っかかってしまった！ －200万円" }
+    ];
+
+    const specialEvents = [
+      { label: "🚀超ダッシュ", move: 8, money: 0, text: "追い風に乗って一気に 8マス 進む！" },
+      { label: "🌀迷子になる", move: -5, money: 0, text: "道を間違えて 5マス 戻ってしまった…" },
+      { label: "💰お小遣い強奪", steal: 300000, text: "他の全員から 30万円 ずつお小遣いをもらった！" },
+      { label: "🎁みんなに配る", steal: -200000, text: "太っ腹！他の全員に 20万円 ずつプレゼントした！" }
+    ];
+
+    // 200マス自動生成
+    const cellsData = [];
+    for (let i = 0; i <= TOTAL_CELLS; i++) {
+      if (i === 0) {
+        cellsData.push({ label: "START", type: "start", text: "人生スタート！" });
+      } else if (i === TOTAL_CELLS) {
+        cellsData.push({ label: "👑 GOAL", type: "goal", text: "200マス完全制覇！ゴール！" });
+      } else if (i % 15 === 0) {
+        cellsData.push({ label: "💰給料日", type: "payday", text: "待ちに待った給料日！" });
+      } else if (i % 28 === 0) {
+        cellsData.push({ label: "✨昇進・転職", type: "job", text: "キャリアアップのチャンス到来！" });
+      } else if (i % 11 === 0) {
+        const sp = specialEvents[(i / 11) % specialEvents.length | 0];
+        cellsData.push({ ...sp, type: "special" });
+      } else if (i % 2 === 1) {
+        const gd = goodEvents[(i * 7) % goodEvents.length];
+        cellsData.push({ ...gd, type: "good" });
+      } else {
+        const bd = badEvents[(i * 5) % badEvents.length];
+        cellsData.push({ ...bd, type: "bad" });
+      }
+    }
+
+    let players = [];
+    let turn = 0;
+    let goalOrder = 0;
+    let isMoving = false;
+
+    function formatYen(amount) {
+      const sign = amount < 0 ? "-" : "";
+      const abs = Math.abs(amount);
+      if (abs >= 100000000) {
+        const oku = Math.floor(abs / 100000000);
+        const man = Math.floor((abs % 100000000) / 10000);
+        return sign + oku + "億" + (man > 0 ? man + "万" : "") + "円";
+      } else if (abs >= 10000) {
+        return sign + (abs / 10000) + "万円";
+      }
+      return sign + abs.toLocaleString() + "円";
+    }
+
+    function initGame() {
+      players = [
+        { name: "ポチ", type: "犬", icon: "🐶", pos: 0, money: 1000000, jobIndex: 0, finished: false },
+        { name: "タマ", type: "猫", icon: "🐱", pos: 0, money: 1000000, jobIndex: 0, finished: false },
+        { name: "ゴリ蔵", type: "ごりら", icon: "🦍", pos: 0, money: 1000000, jobIndex: 0, finished: false },
+        { name: "美咲", type: "美少女", icon: "👧", pos: 0, money: 1000000, jobIndex: 0, finished: false }
+      ];
+      turn = 0;
+      goalOrder = 0;
+      isMoving = false;
+      updateBtn();
+      renderAll();
+    }
+
+    function renderAll() {
+      // 1. プレイヤーカード描画
+      const pGrid = document.getElementById("players-grid");
+      pGrid.innerHTML = "";
+      players.forEach((p, idx) => {
+        const job = jobs[p.jobIndex];
+        const isTurn = (idx === turn && !p.finished);
+        const card = document.createElement("div");
+        card.className = "player-card" + (isTurn ? " active" : "") + (p.finished ? " finished" : "");
+        card.innerHTML = `
+          <div class="p-header">
+            <span>${p.icon} ${p.name} (${p.pos}マス)</span>
+            <span>${p.finished ? "👑済" : ""}</span>
+          </div>
+          <div class="p-money">${formatYen(p.money)}</div>
+          <div style="color:#555; margin-top:2px;">${job.name} / 給${formatYen(job.salary)}</div>
+        `;
+        pGrid.appendChild(card);
+      });
+
+      // 2. 全体進行トラック描画
+      const trackEl = document.getElementById("track");
+      trackEl.innerHTML = "";
+      players.forEach((p, idx) => {
+        const pct = (p.pos / TOTAL_CELLS) * 100;
