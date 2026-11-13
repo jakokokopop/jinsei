@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ほじゃこゲーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+      padding-top: 50px;
+      user-select: none;
+    }
+    h1 { color: #333; }
+    #score {
+      font-size: 48px;
+      font-weight: bold;
+      color: #ff6347;
+      margin: 20px 0;
+    }
+    button {
+      font-size: 24px;
+      padding: 20px 40px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow: 0 5px #2e7d32;
+    }
+    button:active {
+      box-shadow: 0 2px #2e7d32;
+      transform: translateY(3px);
+    }
+    .shop {
+      margin-top: 40px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>ほじゃこクリッカー</h1>
+  <p>ボタンをタップしてポイントを貯めよう！</p>
+  <div id="score">0 pt</div>
+  <button onclick="addPoint()">タップ！</button>
+
+  <div class="shop">
+    <p>★ 将来ここにStripeの課金ボタンを置けます ★</p>
+  </div>
+
+  <script>
+    let score = 0;
+    function addPoint() {
+      score += 1;
+      document.getElementById('score').innerText = score + ' pt';
+    }
+  </script>
+
+</body>
+</html>
